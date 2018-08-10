@@ -3,81 +3,34 @@ const app = express();
 const mongoose = require("mongoose")
 const bodyParser =require("body-parser")
 const morgan = require("morgan")
-
+require("express-async-errors")
 //const mongodb =require("mongodb")
 
 require("./mongo")
 
+require("./model/Post")
+
 
  app.use(bodyParser.json())
- .use(morgan())
- const Post = require("./model/Post");
+ .use(morgan());
+app.use("/posts",require("./routes/posts"))
+app.use((req,res,next)=>{
+req.status= 404;
+const error = new  ("routes not found");
 
+next(error);
+});
 
-
-app.get("/posts", async (req, res) =>{
-    try{
-
-        const posts= await Post.find({})
-            res.send(posts)
-      } catch(error){
-      res.status (500)
-      
-    }
-       
-    });
-
-    app.get("/posts/:postId", async (req,res)=>{
-        try{
-      const post= await Post.findOne({_id:req.params.postId})
-            res.send(post)
-        }catch(error){
-            res.status (500)
-        }
-    });
-   
-     app.put("/posts/:postId", async (req,res)=>{
-try {
-      const post = await Post.findByIdAndUpdate({
-          _id:req.params.postId},req.body, {
-              new:true,
-              runValidators:true
-              
-          })
-          res.send(post)
+if(app.get("env")==="production"){
+    app.use((error,req,res,next)=>{  
+        res.status(req.status||500).send({
+            message:error.message,
             
-
-}catch(error){
-    res.status (500)
+        });
+    });
 }
 
-     });
 
-
-     app.delete("/posts/:postId",async (req,res)=>{
-         try{
-
-        const post =await Post.findByIdAndRemove({
-            _id:req.params.postId 
-         });
-
-         res.send(post)
-
-        }catch(error){
-            res.status (500)
-        }
-     })
-
-app.post("/posts", (req,res)=>{
-    console.log(req.body)
-     
-        const post =new Post();
-        post.title =req.body.title;
-        post.content=req.body.content;
-        post.save();
-
-        res.send(post)
-})
 
 
 app.listen(1100, function() {
